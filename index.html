@@ -765,9 +765,9 @@ async function portalSearch(){
   let dataSource="none";
 
   // 1. Try Google Sheets first (live data — works for all users)
-  if(SHEET_URL!=="https://script.google.com/macros/s/AKfycbzoxRJmN1c2M4pZpy-8HawNdoOo0jBxjS0rhVjLbzBQkr9layetpB3BRIeoFqN6-HnRig/exec"){
-    try{
-      const res=await fetch(`${SHEET_URL}?action=getAll&_=${Date.now()}`);
+if(SHEET_URL && SHEET_URL.includes("script.google.com")){
+  try{
+    const res = await fetch(`${SHEET_URL}?action=getAll&_=${Date.now()}`);
       const data=await res.json();
       if(data.success && data.clients && data.clients.length>0){
         allClients=data.clients;
