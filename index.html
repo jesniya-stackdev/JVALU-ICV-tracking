@@ -98,9 +98,9 @@ input,select,textarea,button{font-family:inherit}
 .btn-recv{border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;min-width:72px}
 .btn-recv.yes{background:#d4edda;color:#1e7e54}
 .btn-recv.no{background:#fde8e6;color:#c0392b}
-.toolbar{background:#fff;border-radius:4px;padding:13px 18px;margin-bottom:14px;border:1px solid rgba(0,0,0,0.06);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.toolbar{background:#fff;border-radius:4px;padding:13px 18px;margin-bottom:14px;border:1px solid rgba(0,0,0,0.06);display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:60px;z-index:20}
 .tbl{width:100%;border-collapse:collapse;font-size:13px}
-.tbl th{padding:9px 10px;text-align:left;font-size:11px;letter-spacing:1px;color:#1d4a45;text-transform:uppercase;border-bottom:2px solid #1d4a45}
+.tbl th{padding:9px 10px;text-align:left;font-size:11px;letter-spacing:1px;color:#1d4a45;text-transform:uppercase;border-bottom:2px solid #1d4a45;position:sticky;top:60px;background:#fff;z-index:10}
 .tbl td{padding:10px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
 .tbl tr:nth-child(even) td{background:#fafafa}
 .tbl tr:hover td{background:#f5f0e8}
@@ -231,7 +231,6 @@ code{background:#f0ece4;padding:2px 6px;border-radius:3px;font-family:monospace;
     </div>
     <div style="display:flex;align-items:center;gap:12px">
       <span id="sync-status"></span>
-      <button class="btn-hdr" onclick="showSetupGuide()">⚙ Setup Guide</button>
       <button class="btn-hdr" onclick="doLogout()">Logout</button>
     </div>
   </div>
@@ -241,7 +240,7 @@ code{background:#f0ece4;padding:2px 6px;border-radius:3px;font-family:monospace;
       ✅ &nbsp;Connected to Google Sheets — all clients see live updates when they search.
     </div>
     <div class="banner banner-yellow" id="local-banner" style="display:none">
-      ⚠️ &nbsp;Running in <b>local-only mode</b> — clients CANNOT find data until you connect Google Sheets. <a href="#" onclick="showSetupGuide();return false" style="color:#856404;font-weight:700">Click Setup Guide →</a>
+      ⚠️ &nbsp;Running in <b>local-only mode</b> — clients CANNOT find data until you connect Google Sheets.
     </div>
     <div class="banner banner-red" id="error-banner" style="display:none">
       ⚠️ &nbsp;<span id="error-msg">Could not connect to Google Sheets.</span>
@@ -266,7 +265,7 @@ code{background:#f0ece4;padding:2px 6px;border-radius:3px;font-family:monospace;
         <div style="text-align:center;padding:20px;color:#888;font-size:13px;display:none" id="list-spinner">⟳ Loading...</div>
         <table class="tbl" id="list-tbl">
           <thead><tr>
-            <th>Company</th><th>Trade License</th><th>Contact</th>
+            <th>Company</th><th>Trade License</th><th>Contact</th><th>Responsible</th>
             <th>Stage</th><th>Expiry</th><th>Docs</th><th>Progress</th><th>Added</th><th>Action</th>
           </tr></thead>
           <tbody id="client-tbody"></tbody>
@@ -279,17 +278,30 @@ code{background:#f0ece4;padding:2px 6px;border-radius:3px;font-family:monospace;
 
 <!-- Add Client Modal -->
 <div class="modal-bg" id="add-modal">
-  <div class="modal">
+  <div class="modal" style="width:600px">
     <div class="modal-title">Add New Client</div>
+    <div id="dup-warning" style="display:none;background:#fde8e6;border:1px solid #f5c6c6;border-radius:3px;padding:10px 14px;margin-bottom:14px;color:#c0392b;font-size:13px;font-weight:600"></div>
     <div class="fgrid">
-      <div class="full"><div class="f-lbl">Company Name *</div><input class="inp" id="f-co"></div>
-      <div><div class="f-lbl">Trade License No. *</div><input class="inp" id="f-tl"></div>
+      <div class="full"><div class="f-lbl">Company Name *</div><input class="inp" id="f-co" oninput="checkDuplicate()"></div>
+      <div><div class="f-lbl">Trade License No. *</div><input class="inp" id="f-tl" oninput="checkDuplicate()"></div>
       <div><div class="f-lbl">Contact Person</div><input class="inp" id="f-ct"></div>
       <div><div class="f-lbl">Phone</div><input class="inp" id="f-ph"></div>
       <div><div class="f-lbl">Email</div><input class="inp" id="f-em"></div>
-      <div><div class="f-lbl">Financial Year</div><input class="inp" id="f-fy" placeholder="e.g. 2025"></div>
-      <div><div class="f-lbl">ICV Expiry Date</div><input class="inp" type="date" id="f-exp"></div>
       <div><div class="f-lbl">Responsible Person</div><input class="inp" id="f-rp" placeholder="e.g. Ahmed Ali"></div>
+      <div><div class="f-lbl">Financial Year (FY)</div><input class="inp" id="f-fy" placeholder="e.g. 2025"></div>
+      <div><div class="f-lbl">ICV Expiry Date</div><input class="inp" type="date" id="f-exp"></div>
+      <div class="full">
+        <div style="background:#f7f3ec;border:1px solid #e2c99a;border-radius:3px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <input type="checkbox" id="f-prev-icv" style="width:16px;height:16px;cursor:pointer" onchange="togglePrevICV()">
+            <label for="f-prev-icv" style="font-size:13px;font-weight:600;color:#0e2e2a;cursor:pointer">Client has a Previous ICV Certificate</label>
+          </div>
+          <div id="prev-icv-fields" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><div class="f-lbl">Previous ICV FY</div><input class="inp" id="f-prev-fy" placeholder="e.g. 2024"></div>
+            <div><div class="f-lbl">Previous ICV Score</div><input class="inp" id="f-prev-score" placeholder="e.g. 72.5"></div>
+          </div>
+        </div>
+      </div>
       <div class="full"><div class="f-lbl">Stage</div>
         <select class="inp" id="f-st">
           <option>Doc Collection</option><option>In Progress</option>
@@ -305,225 +317,6 @@ code{background:#f0ece4;padding:2px 6px;border-radius:3px;font-family:monospace;
   </div>
 </div>
 
-<!-- Setup Guide Modal -->
-<div class="modal-bg" id="setup-modal">
-  <div class="setup-modal">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
-      <div class="modal-title" style="margin:0">⚙ Google Sheets Setup Guide</div>
-      <button class="btn btn-ghost btn-sm" onclick="closeSetupGuide()">✕ Close</button>
-    </div>
-    <p style="font-size:13px;color:#555;margin-bottom:20px;line-height:1.7">
-      This one-time setup takes about <b>10 minutes</b> and makes client data live — clients will see real-time updates just by searching. Completely <b>free</b>, no hosting needed.
-    </p>
-
-    <div class="step-block">
-      <div class="step-num">Step 1</div>
-      <div class="step-title">Create a Google Sheet</div>
-      <div class="step-desc">
-        Go to <a href="https://sheets.google.com" target="_blank" style="color:#1d4a45;font-weight:600">sheets.google.com</a> and create a new blank spreadsheet. Name it <b>"JVALU ICV Tracker"</b>. You can use your existing Google account.
-      </div>
-    </div>
-
-    <div class="step-block">
-      <div class="step-num">Step 2</div>
-      <div class="step-title">Open Apps Script Editor</div>
-      <div class="step-desc">
-        In your Google Sheet, click <b>Extensions → Apps Script</b>. This opens the script editor. Delete any existing code and paste the entire script below:
-      </div>
-      <div class="code-block" id="apps-script-code">// JVALU ICV Tracker — Google Apps Script Backend
-// Paste this ENTIRE block into Apps Script editor
-
-const SHEET_NAME = "Clients";
-const DOCS_SHEET = "Documents";
-
-function doGet(e) {
-  const action = e.parameter.action;
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  
-  if (action === "getAll") {
-    try {
-      const clients = getAllClients(ss);
-      return jsonResponse({ success: true, clients: clients });
-    } catch(err) {
-      return jsonResponse({ success: false, error: err.message });
-    }
-  }
-  return jsonResponse({ success: false, error: "Unknown action" });
-}
-
-function doPost(e) {
-  const body = JSON.parse(e.postData.contents);
-  const action = body.action;
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  
-  try {
-    if (action === "saveClient") {
-      saveClient(ss, body.client);
-      return jsonResponse({ success: true });
-    }
-    if (action === "saveDocs") {
-      saveDocs(ss, body.clientId, body.documents);
-      return jsonResponse({ success: true });
-    }
-    if (action === "deleteClient") {
-      deleteClient(ss, body.id);
-      return jsonResponse({ success: true });
-    }
-    return jsonResponse({ success: false, error: "Unknown action" });
-  } catch(err) {
-    return jsonResponse({ success: false, error: err.message });
-  }
-}
-
-function jsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function getOrCreateSheet(ss, name, headers) {
-  let sh = ss.getSheetByName(name);
-  if (!sh) {
-    sh = ss.insertSheet(name);
-    sh.getRange(1, 1, 1, headers.length).setValues([headers]);
-  }
-  return sh;
-}
-
-function getAllClients(ss) {
-  const cSh = getOrCreateSheet(ss, SHEET_NAME, ["id","company","tradeLicense","contact","phone","email","financialYear","stage","addedDate","notes"]);
-  const dSh = getOrCreateSheet(ss, DOCS_SHEET, ["clientId","docId","received","date","remarks"]);
-  
-  const cData = cSh.getDataRange().getValues();
-  const dData = dSh.getDataRange().getValues();
-  
-  if (cData.length <= 1) return [];
-  
-  const cHeaders = cData[0];
-  const dHeaders = dData[0];
-  
-  // Build docs map
-  const docsMap = {};
-  for (let i = 1; i < dData.length; i++) {
-    const row = dData[i];
-    const clientId = row[dHeaders.indexOf("clientId")];
-    const docId = parseInt(row[dHeaders.indexOf("docId")]);
-    if (!docsMap[clientId]) docsMap[clientId] = {};
-    docsMap[clientId][docId] = {
-      received: row[dHeaders.indexOf("received")] === true || row[dHeaders.indexOf("received")] === "TRUE",
-      date: row[dHeaders.indexOf("date")] || "",
-      remarks: row[dHeaders.indexOf("remarks")] || ""
-    };
-  }
-  
-  const clients = [];
-  for (let i = 1; i < cData.length; i++) {
-    const row = cData[i];
-    if (!row[0]) continue;
-    const client = {};
-    cHeaders.forEach((h, j) => { client[h] = row[j] || ""; });
-    client.documents = docsMap[client.id] || {};
-    clients.push(client);
-  }
-  return clients;
-}
-
-function saveClient(ss, client) {
-  const sh = getOrCreateSheet(ss, SHEET_NAME, ["id","company","tradeLicense","contact","phone","email","financialYear","stage","addedDate","notes"]);
-  const headers = sh.getRange(1, 1, 1, 10).getValues()[0];
-  const data = sh.getDataRange().getValues();
-  
-  // Find existing row
-  let rowIdx = -1;
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === client.id) { rowIdx = i + 1; break; }
-  }
-  
-  const row = headers.map(h => client[h] !== undefined ? client[h] : "");
-  if (rowIdx > 0) {
-    sh.getRange(rowIdx, 1, 1, row.length).setValues([row]);
-  } else {
-    sh.appendRow(row);
-  }
-}
-
-function saveDocs(ss, clientId, documents) {
-  const sh = getOrCreateSheet(ss, DOCS_SHEET, ["clientId","docId","received","date","remarks"]);
-  const data = sh.getDataRange().getValues();
-  
-  // Remove existing docs for this client
-  for (let i = data.length - 1; i >= 1; i--) {
-    if (data[i][0] === clientId) {
-      sh.deleteRow(i + 1);
-    }
-  }
-  
-  // Append new docs
-  Object.entries(documents).forEach(([docId, doc]) => {
-    sh.appendRow([clientId, parseInt(docId), doc.received, doc.date || "", doc.remarks || ""]);
-  });
-}
-
-function deleteClient(ss, id) {
-  const cSh = ss.getSheetByName(SHEET_NAME);
-  const dSh = ss.getSheetByName(DOCS_SHEET);
-  
-  if (cSh) {
-    const data = cSh.getDataRange().getValues();
-    for (let i = data.length - 1; i >= 1; i--) {
-      if (data[i][0] === id) { cSh.deleteRow(i + 1); break; }
-    }
-  }
-  if (dSh) {
-    const data = dSh.getDataRange().getValues();
-    for (let i = data.length - 1; i >= 1; i--) {
-      if (data[i][0] === id) { dSh.deleteRow(i + 1); }
-    }
-  }
-}</div>
-      <button class="btn btn-teal btn-sm" style="margin-top:8px" onclick="copyScript()">📋 Copy Script</button>
-    </div>
-
-    <div class="step-block">
-      <div class="step-num">Step 3</div>
-      <div class="step-title">Deploy as Web App</div>
-      <div class="step-desc">
-        1. In the Apps Script editor, click <b>Deploy → New Deployment</b><br>
-        2. Click the gear icon ⚙ next to "Select type" → choose <b>Web app</b><br>
-        3. Set <b>Execute as:</b> Me<br>
-        4. Set <b>Who has access:</b> Anyone<br>
-        5. Click <b>Deploy</b> → Click <b>Authorize access</b> → Allow<br>
-        6. Copy the <b>Web app URL</b> (looks like: <code>https://script.google.com/macros/s/ABC.../exec</code>)
-      </div>
-    </div>
-
-    <div class="step-block">
-      <div class="step-num">Step 4</div>
-      <div class="step-title">Paste URL into This File</div>
-      <div class="step-desc">
-        Open this HTML file in a text editor (Notepad or VS Code), find this line near the top of the &lt;script&gt; section:<br><br>
-        <code>const SHEET_URL = "https://script.google.com/macros/s/AKfycbzKIs5htenfOXnI7BZgI2VT-tc0HhRQpBJS_GWGvZZd7HPpXNMhI1aAHFYmQ9f03WE/exec";</code><br><br>
-        Replace <code>https://script.google.com/macros/s/AKfycbzoxRJmN1c2M4pZpy-8HawNdoOo0jBxjS0rhVjLbzBQkr9layetpB3BRIeoFqN6-HnRig/exec</code> with your copied Web App URL. Save the file. Done!<br><br>
-        <b>Current URL in file:</b> <span id="current-url-display" style="font-size:12px;color:#1d4a45;font-weight:600;font-family:monospace"></span>
-      </div>
-    </div>
-
-    <div class="step-block" style="background:#e8f5e9;border-left-color:#1e7e54">
-      <div class="step-num" style="color:#1e7e54">For Sharing with Clients</div>
-      <div class="step-title">Host the HTML File Free on GitHub Pages</div>
-      <div class="step-desc">
-        1. Go to <a href="https://github.com" target="_blank" style="color:#1d4a45;font-weight:600">github.com</a> → Create free account → New repository (name: <code>jvalu-icv</code>)<br>
-        2. Upload this HTML file, rename it to <code>index.html</code><br>
-        3. Go to repository <b>Settings → Pages → Source: main branch</b> → Save<br>
-        4. Your URL will be: <code>https://[your-username].github.io/jvalu-icv/</code><br><br>
-        Share this link with clients. They can search anytime and see live updates — no need to resend the file ever again. <b>100% free.</b>
-      </div>
-    </div>
-
-    <div style="text-align:right;margin-top:16px">
-      <button class="btn btn-gold" onclick="closeSetupGuide()">Close Guide</button>
-    </div>
-  </div>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -532,7 +325,7 @@ function deleteClient(ss, id) {
 //  ★ CONFIG — EDIT THESE TWO LINES ONLY ★
 // ════════════════════════════════════════════════
 const ADMIN_PASSWORD = "jvalu2025";
-const SHEET_URL      = "https://script.google.com/macros/s/AKfycbyhJnVfdFQW2Ul104auMG8dCdenS1eEPNZR7YAtMi0QATfjIBzljbGAiEaJezHw85VlTw/exec";
+const SHEET_URL      = "https://script.google.com/macros/s/AKfycby7vX-p19UlVHjZTh3853kGE-tUAhbfEScirql82jWlF4ihKgdEGf9Igty_AfT_yhHz/exec";
 // ════════════════════════════════════════════════
 
 // ICV DOCUMENTS
@@ -573,44 +366,57 @@ const STAGE_BG={"Doc Collection":"#fef3e2","In Progress":"#e3f2fd","Financial Re
 const STAGE_TX={"Doc Collection":"#856404","In Progress":"#0c5460","Financial Review":"#4a235a","Submitted":"#155724","Certified":"#155724","Follow Up":"#c0392b"};
 
 function todayStr(){return new Date().toISOString().split("T")[0];}
-
-// Returns number of days until expiry (negative = already expired)
-function daysUntilExpiry(expiryDate){
-  if(!expiryDate) return null;
-  const exp=new Date(expiryDate);
+function isFollowUpDue(c){
+  if(!c.expiryDate) return false;
+  const exp=new Date(c.expiryDate);
   exp.setHours(0,0,0,0);
   const now=new Date();
   now.setHours(0,0,0,0);
-  return Math.ceil((exp-now)/(1000*60*60*24));
+  const diff=Math.ceil((exp-now)/(1000*60*60*24));
+  // Trigger if already expired (diff<0) OR expiring within 50 days
+  return diff<=50;
 }
-// Returns true if ≤50 days to expiry OR already expired
-function isFollowUpDue(c){
-  const d=daysUntilExpiry(c.expiryDate);
-  return d!==null && d<=50;
+function formatExpiry(dateStr){
+  if(!dateStr) return "—";
+  const exp=new Date(dateStr);
+  exp.setHours(0,0,0,0);
+  const now=new Date();
+  now.setHours(0,0,0,0);
+  const diff=Math.ceil((exp-now)/(1000*60*60*24));
+  const formatted=exp.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+  if(diff<0)  return `<span style="color:#c0392b;font-weight:700">${formatted}<br><span style="font-size:10px;background:#fde8e6;padding:1px 5px;border-radius:2px">EXPIRED ${Math.abs(diff)} day${Math.abs(diff)===1?'':'s'} ago</span></span>`;
+  if(diff===0) return `<span style="color:#c0392b;font-weight:700">${formatted}<br><span style="font-size:10px;background:#fde8e6;padding:1px 5px;border-radius:2px">EXPIRES TODAY</span></span>`;
+  if(diff<=10) return `<span style="color:#c0392b;font-weight:700">${formatted}<br><span style="font-size:10px;background:#fde8e6;padding:1px 5px;border-radius:2px">⚠ ${diff} days left</span></span>`;
+  if(diff<=30) return `<span style="color:#c0392b;font-weight:600">${formatted}<br><span style="font-size:10px;background:#fef3e2;padding:1px 5px;border-radius:2px">⚠ ${diff} days left</span></span>`;
+  if(diff<=50) return `<span style="color:#d4830a;font-weight:600">${formatted}<br><span style="font-size:10px;background:#fef3e2;padding:1px 5px;border-radius:2px">${diff} days left</span></span>`;
+  return `<span style="color:#555">${formatted}</span>`;
 }
-// Returns a coloured expiry badge HTML for the LIST row
-function expiryBadge(expiryDate){
-  if(!expiryDate) return "<span style=\"color:#ccc\">—</span>";
-  const d=daysUntilExpiry(expiryDate);
-  const dt=new Date(expiryDate).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
-  if(d<0)  return `<span style="color:#c0392b;font-weight:700">${dt}<br><span style="font-size:10px;background:#fde8e6;padding:1px 5px;border-radius:2px">EXPIRED ${Math.abs(d)}d ago</span></span>`;
-  if(d===0) return `<span style="color:#c0392b;font-weight:700">${dt}<br><span style="font-size:10px;background:#fde8e6;padding:1px 5px;border-radius:2px">EXPIRES TODAY</span></span>`;
-  if(d<=10) return `<span style="color:#c0392b;font-weight:700">${dt}<br><span style="font-size:10px;background:#fde8e6;padding:1px 5px;border-radius:2px">⚠ ${d} days left</span></span>`;
-  if(d<=30) return `<span style="color:#c0392b;font-weight:700">${dt}<br><span style="font-size:10px;background:#fef3e2;padding:1px 5px;border-radius:2px">⚠ ${d} days left</span></span>`;
-  if(d<=50) return `<span style="color:#d4830a;font-weight:600">${dt}<br><span style="font-size:10px;background:#fef3e2;padding:1px 5px;border-radius:2px">${d} days left</span></span>`;
-  return `<span style="color:#555">${dt}</span>`;
+function checkDuplicate(){
+  const co=(document.getElementById("f-co").value||"").trim().toLowerCase();
+  const tl=(document.getElementById("f-tl").value||"").trim().toLowerCase();
+  const warn=document.getElementById("dup-warning");
+  if(!co&&!tl){warn.style.display="none";return;}
+  const dup=clients.find(c=>
+    (co.length>2&&c.company.toLowerCase().includes(co))||
+    (tl.length>2&&(c.tradeLicense||"").toLowerCase().includes(tl))
+  );
+  if(dup){
+    warn.style.display="block";
+    warn.textContent=`⚠ Possible duplicate: "${dup.company}" (TL: ${dup.tradeLicense||"—"}) already exists.`;
+  } else {
+    warn.style.display="none";
+  }
 }
-// Returns full expiry block HTML for the DETAIL page
-function expiryDetailBlock(expiryDate){
-  if(!expiryDate) return "<span style=\"color:#ccc\">Not set</span>";
-  const d=daysUntilExpiry(expiryDate);
-  const dt=new Date(expiryDate).toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"});
-  if(d<0)  return `<span style="color:#c0392b;font-weight:800;font-size:16px">${dt}</span><div style="margin-top:6px;background:#fde8e6;border:1px solid #f5c6c6;border-radius:4px;padding:8px 14px;color:#c0392b;font-weight:700;font-size:13px">🔴 EXPIRED — ${Math.abs(d)} days ago. Renewal overdue.</div>`;
-  if(d===0) return `<span style="color:#c0392b;font-weight:800;font-size:16px">${dt}</span><div style="margin-top:6px;background:#fde8e6;border:1px solid #f5c6c6;border-radius:4px;padding:8px 14px;color:#c0392b;font-weight:700;font-size:13px">🔴 EXPIRES TODAY — Immediate renewal required.</div>`;
-  if(d<=10) return `<span style="color:#c0392b;font-weight:800;font-size:16px">${dt}</span><div style="margin-top:6px;background:#fde8e6;border:1px solid #f5c6c6;border-radius:4px;padding:8px 14px;color:#c0392b;font-weight:700;font-size:13px">🔴 CRITICAL — Expires in <b>${d} days</b>. Urgent action needed.</div>`;
-  if(d<=30) return `<span style="color:#c0392b;font-weight:700;font-size:15px">${dt}</span><div style="margin-top:6px;background:#fef3e2;border:1px solid #ffd966;border-radius:4px;padding:8px 14px;color:#856404;font-weight:700;font-size:13px">🟠 Expires in <b>${d} days</b> — Follow up required soon.</div>`;
-  if(d<=50) return `<span style="color:#d4830a;font-weight:700;font-size:15px">${dt}</span><div style="margin-top:6px;background:#fef3e2;border:1px solid #ffd966;border-radius:4px;padding:8px 14px;color:#856404;font-size:13px">🟡 Expires in <b>${d} days</b> — Schedule follow up.</div>`;
-  return `<span style="color:#1d4a45;font-weight:600;font-size:15px">${dt}</span><div style="margin-top:4px;font-size:12px;color:#888">${d} days remaining</div>`;
+function autoFollowUp(c){
+  // Auto-move to Follow Up if expiry is within 50 days OR already expired
+  if(isFollowUpDue(c) && c.stage!=="Follow Up"){
+    c.stage="Follow Up";
+  }
+}
+function togglePrevICV(){
+  const cb=document.getElementById("f-prev-icv");
+  const fields=document.getElementById("prev-icv-fields");
+  fields.style.display=cb.checked?"grid":"none";
 }
 function mkDocs(){const o={};ICV_DOCS.forEach(d=>{o[d.id]={received:false,date:"",remarks:""};});return o;}
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
@@ -699,11 +505,14 @@ async function loadAll(){
   document.getElementById("local-banner").style.display="none";
   document.getElementById("error-banner").style.display="none";
   try{
-    // Sheet URL configured — proceed
+    if(SHEET_URL==="https://script.google.com/macros/s/AKfycbyhJnVfdFQW2Ul104auMG8dCdenS1eEPNZR7YAtMi0QATfjIBzljbGAiEaJezHw85VlTw/exec") throw new Error("not_configured");
     const res=await apiGet("getAll");
     if(!res.success) throw new Error(res.error||"Error from sheet");
     clients=res.clients;
-    clients.forEach(c=>{ICV_DOCS.forEach(d=>{if(!c.documents[d.id])c.documents[d.id]={received:false,date:"",remarks:""};});});
+    clients.forEach(c=>{
+      ICV_DOCS.forEach(d=>{if(!c.documents[d.id])c.documents[d.id]={received:false,date:"",remarks:""};});
+      autoFollowUp(c);
+    });
     isOnline=true;
     document.getElementById("sheet-banner").style.display="flex";
     setSS("✓ Synced");
@@ -730,28 +539,29 @@ function renderStats(){
     <div class="stat-card" style="border-top:3px solid #1d4a45"><div class="stat-num" style="color:#1d4a45">${clients.length}</div><div class="stat-lbl">Total Clients</div></div>
     <div class="stat-card" style="border-top:3px solid #d4830a"><div class="stat-num" style="color:#d4830a">${clients.filter(c=>c.stage==="In Progress"||c.stage==="Financial Review").length}</div><div class="stat-lbl">In Progress</div></div>
     <div class="stat-card" style="border-top:3px solid #1e7e54"><div class="stat-num" style="color:#1e7e54">${clients.filter(c=>c.stage==="Certified").length}</div><div class="stat-lbl">Certified</div></div>
-    <div class="stat-card" style="border-top:3px solid #c0392b"><div class="stat-num" style="color:#c0392b">${clients.filter(c=>isFollowUpDue(c)).length}</div><div class="stat-lbl">Follow Up Due</div></div>`;
+    <div class="stat-card" style="border-top:3px solid #c0392b"><div class="stat-num" style="color:#c0392b">${clients.filter(c=>c.stage==="Follow Up"||isFollowUpDue(c)).length}</div><div class="stat-lbl">Follow Up Due</div></div>`;
 }
 
 function renderList(){
   const q=(document.getElementById("search-inp").value||"").toLowerCase();
   const fs=document.getElementById("filter-stage").value;
   const f=clients.filter(c=>{
-    const mq=!q||c.company.toLowerCase().includes(q)||(c.tradeLicense||"").toLowerCase().includes(q)||(c.contact||"").toLowerCase().includes(q);
+    const mq=!q||c.company.toLowerCase().includes(q)||(c.tradeLicense||"").toLowerCase().includes(q)||(c.contact||"").toLowerCase().includes(q)||(c.responsible||"").toLowerCase().includes(q);
     return mq&&(fs==="All"||c.stage===fs);
   });
   document.getElementById("list-lbl").textContent=`👥 Clients (${f.length})`;
   document.getElementById("client-tbody").innerHTML=f.map((c,i)=>{
     const p=getProg(c.documents);
-    const fuDue=isFollowUpDue(c);
-    const rowBg=fuDue?(i%2===0?"#fff8f0":"#fff4ec"):(i%2===0?"#fafafa":"#fff");
-    const fuBadge=fuDue?`<span style="font-size:9px;background:#c0392b;color:#fff;border-radius:2px;padding:1px 5px;margin-left:6px;vertical-align:middle;font-weight:700">FOLLOW UP</span>`:"";
-    return `<tr style="background:${rowBg}">
-      <td style="font-weight:700;color:#0e2e2a">${esc(c.company)}${fuBadge}</td>
+    const expiry=c.expiryDate||"";
+    const expiryDisplay=expiry?formatExpiry(expiry):"<span style='color:#ccc'>—</span>";
+    const followUpFlag=isFollowUpDue(c)?`<span style="font-size:10px;background:#fde8e6;color:#c0392b;border-radius:2px;padding:2px 5px;margin-left:5px;font-weight:700">FOLLOW UP</span>`:"";
+    return `<tr style="background:${i%2===0?"#fafafa":"#fff"}">
+      <td style="font-weight:700;color:#0e2e2a">${esc(c.company)}${followUpFlag}</td>
       <td style="font-family:monospace;color:#555;font-size:12px">${esc(c.tradeLicense)}</td>
       <td style="color:#666">${esc(c.contact||"")}</td>
+      <td style="color:#555;font-size:12px">${esc(c.responsible||"")}</td>
       <td><span style="font-size:11px;font-weight:700;padding:3px 8px;background:${STAGE_BG[c.stage]||"#f0f0f0"};border-radius:2px;color:${STAGE_TX[c.stage]||"#1d4a45"}">${esc(c.stage)}</span></td>
-      <td style="font-size:12px;line-height:1.4">${expiryBadge(c.expiryDate||"")}</td>
+      <td style="font-size:12px">${expiryDisplay}</td>
       <td><span style="color:#1e7e54;font-weight:700">${p.received}</span><span style="color:#bbb"> / ${p.total}</span></td>
       <td style="min-width:130px"><div style="display:flex;align-items:center;gap:7px">
         <div class="prog-mini"><div class="prog-mini-fill" style="width:${p.pct}%;background:${p.pct===100?"#1e7e54":"#c9a96e"}"></div></div>
@@ -763,7 +573,7 @@ function renderList(){
         <button class="btn btn-red btn-sm" onclick="delClient('${c.id}')">✕</button>
       </div></td>
     </tr>`;
-  }).join("")||`<tr><td colspan="9" style="text-align:center;color:#ccc;padding:24px">No clients found.</td></tr>`;
+  }).join("")||`<tr><td colspan="10" style="text-align:center;color:#ccc;padding:24px">No clients found.</td></tr>`;
 }
 
 async function delClient(id){
@@ -839,12 +649,9 @@ function renderDetail(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
         <div>
           <div style="font-size:22px;font-weight:800;color:#0e2e2a">${esc(c.company)}</div>
-          <div style="font-size:12px;color:#888;margin-top:4px">TL: <b style="color:#1d4a45">${esc(c.tradeLicense)}</b> &nbsp;·&nbsp; FY: <b style="color:#1d4a45">${esc(c.financialYear||"2025")}</b> &nbsp;·&nbsp; Ref: <b>${esc(c.id)}</b> &nbsp;·&nbsp; Added: ${esc(c.addedDate||"")}</div>
-          <div style="font-size:12px;color:#666;margin-top:5px">👤 ${esc(c.contact||"")} &nbsp; 📞 ${esc(c.phone||"")} &nbsp; ✉️ ${esc(c.email||"")}${c.responsible?` &nbsp;·&nbsp; 🎯 <b style="color:#0e2e2a">${esc(c.responsible)}</b>`:""}</div>
-          ${(c.expiryDate)?`<div style="margin-top:12px;padding:12px 16px;background:#f7f3ec;border-left:4px solid ${daysUntilExpiry(c.expiryDate)<=0?"#c0392b":daysUntilExpiry(c.expiryDate)<=10?"#c0392b":daysUntilExpiry(c.expiryDate)<=30?"#d4830a":daysUntilExpiry(c.expiryDate)<=50?"#d4830a":"#1d4a45"};border-radius:3px">
-            <div style="font-size:10px;color:#aaa;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">ICV Expiry</div>
-            ${expiryDetailBlock(c.expiryDate)}
-          </div>`:""}
+          <div style="font-size:12px;color:#888;margin-top:4px">TL: <b style="color:#1d4a45">${esc(c.tradeLicense)}</b> &nbsp;·&nbsp; FY: <b style="color:#1d4a45">${esc(c.financialYear||"2025")}</b> &nbsp;·&nbsp; Expiry: <b style="color:${c.expiryDate?"#1d4a45":"#ccc"}">${c.expiryDate||"—"}</b> &nbsp;·&nbsp; Ref: <b>${esc(c.id)}</b> &nbsp;·&nbsp; Added: ${esc(c.addedDate||"")}</div>
+          <div style="font-size:12px;color:#666;margin-top:5px">👤 ${esc(c.contact||"")} &nbsp; 📞 ${esc(c.phone||"")} &nbsp; ✉️ ${esc(c.email||"")} &nbsp;·&nbsp; 🎯 Responsible: <b style="color:#0e2e2a">${esc(c.responsible||"—")}</b></div>
+          ${c.prevICV?`<div style="font-size:12px;color:#856404;margin-top:5px;background:#fef3e2;border-radius:3px;padding:4px 10px;display:inline-block">📜 Previous ICV: FY ${esc(c.prevIcvFy||"—")} · Score: ${esc(c.prevIcvScore||"—")}</div>`:""}
         </div>
         <div>
           <div style="font-size:10px;color:#aaa;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px">Case Stage</div>
@@ -906,8 +713,11 @@ async function syncDocs(c){
 function openAddModal(){document.getElementById("add-modal").classList.add("open");}
 function closeAddModal(){
   document.getElementById("add-modal").classList.remove("open");
-  ["f-co","f-tl","f-ct","f-ph","f-em","f-fy","f-exp","f-rp"].forEach(id=>document.getElementById(id).value="");
+  ["f-co","f-tl","f-ct","f-ph","f-em","f-rp","f-fy","f-exp","f-prev-fy","f-prev-score"].forEach(id=>document.getElementById(id).value="");
   document.getElementById("f-st").selectedIndex=0;
+  document.getElementById("f-prev-icv").checked=false;
+  document.getElementById("prev-icv-fields").style.display="none";
+  document.getElementById("dup-warning").style.display="none";
 }
 async function submitAdd(){
   const co=document.getElementById("f-co").value.trim();
@@ -919,9 +729,12 @@ async function submitAdd(){
     contact:document.getElementById("f-ct").value.trim(),
     phone:document.getElementById("f-ph").value.trim(),
     email:document.getElementById("f-em").value.trim(),
+    responsible:document.getElementById("f-rp").value.trim(),
     financialYear:document.getElementById("f-fy").value.trim()||"2025",
     expiryDate:document.getElementById("f-exp").value.trim(),
-    responsible:document.getElementById("f-rp").value.trim(),
+    prevICV:document.getElementById("f-prev-icv").checked,
+    prevIcvFy:document.getElementById("f-prev-fy").value.trim(),
+    prevIcvScore:document.getElementById("f-prev-score").value.trim(),
     stage:document.getElementById("f-st").value,
     addedDate:todayStr(),notes:"",documents:mkDocs()
   };
@@ -1063,10 +876,6 @@ function buildPortalResult(c){
             ${c.financialYear?`&nbsp;·&nbsp; FY: <b style="color:#1d4a45">${esc(c.financialYear)}</b>`:""}
             &nbsp;·&nbsp; Ref: <b style="color:#1d4a45">${esc(c.id)}</b>
           </div>
-          ${c.expiryDate?`<div style="margin-top:10px;padding:10px 14px;border-radius:4px;background:${daysUntilExpiry(c.expiryDate)<=0?"#fde8e6":daysUntilExpiry(c.expiryDate)<=30?"#fef3e2":"#eaf4ee"};border-left:4px solid ${daysUntilExpiry(c.expiryDate)<=0?"#c0392b":daysUntilExpiry(c.expiryDate)<=30?"#d4830a":"#1d4a45"}">
-            <div style="font-size:10px;letter-spacing:2px;color:#aaa;text-transform:uppercase;margin-bottom:4px">ICV Certificate Expiry</div>
-            ${expiryDetailBlock(c.expiryDate)}
-          </div>`:""}
         </div>
         <div style="text-align:right">
           <div style="font-size:10px;color:#aaa;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Current Stage</div>
@@ -1230,30 +1039,6 @@ function downloadSummary(c){
   const w=window.open("","_blank");
   if(w){w.document.write(html);w.document.close();}
   else{alert("Please allow pop-ups for this page to download the summary.");}
-}
-
-// ════════════════════════════════════════
-//  SETUP GUIDE MODAL
-// ════════════════════════════════════════
-function showSetupGuide(){
-  document.getElementById("setup-modal").classList.add("open");
-  document.getElementById("current-url-display").textContent=
-    SHEET_URL==="https://script.google.com/macros/s/AKfycbzoxRJmN1c2M4pZpy-8HawNdoOo0jBxjS0rhVjLbzBQkr9layetpB3BRIeoFqN6-HnRig/exec" ? "⚠ Not configured yet" : SHEET_URL;
-}
-function closeSetupGuide(){
-  document.getElementById("setup-modal").classList.remove("open");
-}
-function copyScript(){
-  const code=document.getElementById("apps-script-code").textContent;
-  navigator.clipboard.writeText(code).then(()=>{
-    showToast("✓ Script copied to clipboard!");
-  }).catch(()=>{
-    // Fallback
-    const ta=document.createElement("textarea");
-    ta.value=code;document.body.appendChild(ta);ta.select();
-    document.execCommand("copy");document.body.removeChild(ta);
-    showToast("✓ Script copied!");
-  });
 }
 </script>
 </body>
