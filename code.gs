@@ -8,7 +8,7 @@ var DOCS_SHEET = "Documents";
 var CLIENT_HEADERS = [
   "id", "company", "tradeLicense", "contact", "phone", "email",
   "financialYear", "expiryDate", "responsible", "stage", "addedDate", "notes",
-  "prevICV", "prevIcvFy", "prevIcvScore", "hasEmirati"
+  "prevICV", "prevIcvFy", "prevIcvScore", "hasEmirati", "icvScore"
 ];
 
 function doGet(e) {
@@ -202,5 +202,83 @@ function deleteClient(ss, id) {
     for (var i = dData.length - 1; i >= 1; i--) {
       if (String(dData[i][0]) === String(id)) dSh.deleteRow(i + 1);
     }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// AUTOMATED BACKUPS
+//
+// ONE-TIME SETUP (do this once, manually, from the Apps Script editor):
+//   1. Open this script in Apps Script (Extensions → Apps Script).
+//   2. In the function dropdown at the top, select "setupWeeklyBackup".
+//   3. Click "Run". The first run will ask you to authorize Drive access —
+//      approve it (it's your own script, on your own spreadsheet).
+//   4. Done. A "JVALU Backups" folder will appear in your Google Drive, and
+//      a dated copy of the whole spreadsheet will be saved there every
+//      Monday at ~2am automatically, going forward. The 12 most recent
+//      weekly backups are kept; older ones are auto-deleted so Drive
+//      doesn't fill up.
+//
+// You never need to touch this again after the one-time setup — it keeps
+// running even through future code redeployments, since triggers are
+// stored separately from the code itself.
+// ══════════════════════════════════════════════════════════════════════════
+
+var BACKUP_FOLDER_NAME = "JVALU Backups";
+var BACKUPS_TO_KEEP = 12; // ~3 months of weekly backups
+
+function setupWeeklyBackup() {
+  // Remove any existing backup triggers first, so re-running this doesn't
+  // create duplicates.
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === "createWeeklyBackup") {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  ScriptApp.newTrigger("createWeeklyBackup")
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .atHour(2)
+    .create();
+
+  // Also create an immediate backup right now, so you have one straight away.
+  createWeeklyBackup();
+
+  Logger.log("Weekly backup trigger installed. A backup was also just created now.");
+}
+
+function createWeeklyBackup() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sourceFile = DriveApp.getFileById(ss.getId());
+
+  var folder = getOrCreateBackupFolder_();
+  var stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+  var backupName = ss.getName() + " — backup " + stamp;
+
+  sourceFile.makeCopy(backupName, folder);
+
+  pruneOldBackups_(folder);
+}
+
+function getOrCreateBackupFolder_() {
+  var folders = DriveApp.getFoldersByName(BACKUP_FOLDER_NAME);
+  if (folders.hasNext()) return folders.next();
+  return DriveApp.createFolder(BACKUP_FOLDER_NAME);
+}
+
+function pruneOldBackups_(folder) {
+  var files = [];
+  var it = folder.getFiles();
+  while (it.hasNext()) files.push(it.next());
+
+  if (files.length <= BACKUPS_TO_KEEP) return;
+
+  files.sort(function(a, b) {
+    return b.getDateCreated().getTime() - a.getDateCreated().getTime();
+  });
+
+  for (var i = BACKUPS_TO_KEEP; i < files.length; i++) {
+    files[i].setTrashed(true);
   }
 }
