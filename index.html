@@ -586,7 +586,19 @@ function togglePrevICV(){
 }
 function mkDocs(){const o={};ICV_DOCS.forEach(d=>{o[d.id]={received:false,date:"",remarks:""};});return o;}
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-function getProg(docs){const v=Object.values(docs);const n=v.filter(d=>d.received).length;return{received:n,total:v.length,pct:Math.round(n/v.length*100)};}
+function getProg(docs,hasEmirati){
+  const emiratiIds=[10,11,12,13,14,15];
+  const v=Object.values(docs||{});
+  if(hasEmirati===undefined){
+    const n=v.filter(d=>d.received).length;
+    const total=v.length||1;
+    return{received:n,total:v.length,pct:Math.round(n/total*100)};
+  }
+  const filteredDocs=ICV_DOCS.filter(d=>hasEmirati||!emiratiIds.includes(d.id));
+  const filteredTotal=filteredDocs.length||1;
+  const filteredReceived=filteredDocs.filter(d=>docs[d.id]&&docs[d.id].received).length;
+  return{received:filteredReceived,total:filteredDocs.length,pct:Math.round(filteredReceived/filteredTotal*100)};
+}
 function showToast(msg,col="#1d4a45"){const t=document.getElementById("toast");t.textContent=msg;t.style.background=col;t.style.display="block";setTimeout(()=>t.style.display="none",2600);}
 function setSS(msg){document.getElementById("sync-status").textContent=msg;}
 
@@ -1087,15 +1099,23 @@ async function portalSearch(){
 }
 
 function buildPortalResult(c){
-  const p=getProg(c.documents);
-  const recvList=ICV_DOCS.filter(d=>c.documents[d.id]&&c.documents[d.id].received);
-  const pendList=ICV_DOCS.filter(d=>!(c.documents[d.id]&&c.documents[d.id].received));
+const emiratiIds=[10,11,12,13,14,15];
+  const hasEm=c.hasEmirati===true||c.hasEmirati==="true"||c.hasEmirati==="TRUE"||c.hasEmirati==="1";
+  const p=getProg(c.documents,hasEm);
+  const recvList=ICV_DOCS.filter(d=>
+    c.documents[d.id]&&c.documents[d.id].received&&
+    (hasEm||!emiratiIds.includes(d.id))
+  );
+  const pendList=ICV_DOCS.filter(d=>
+    !(c.documents[d.id]&&c.documents[d.id].received)&&
+    (hasEm||!emiratiIds.includes(d.id))
+  );
   const remList=ICV_DOCS.filter(d=>c.documents[d.id]&&c.documents[d.id].remarks);
   const pc=p.pct===100?"#1e7e54":p.pct>=70?"#c9a96e":"#d4830a";
   const pendMand=pendList.filter(d=>d.required).length;
 
-  const alertBox=p.pct===100
-    ?`<div style="background:#d4edda;border:1px solid #b2d8b2;border-radius:4px;padding:12px 16px;color:#155724;font-size:13px;font-weight:600;margin-top:12px">✅ All documents received! Your file is being processed by our team.</div>`
+const alertBox=p.pct===100
+  ?`<div style="background:#d4edda;border:1px solid #b2d8b2;border-radius:4px;padding:12px 16px;color:#155724;font-size:13px;font-weight:600;margin-top:12px">${c.stage==="Certified"?"✅ Your ICV certificate has been successfully issued.":"✅ All documents received! Your file is being processed by our team."}</div>`
     :pendMand>0
     ?`<div style="background:#fff3cd;border:1px solid #ffd966;border-radius:4px;padding:12px 16px;color:#856404;font-size:13px;margin-top:12px">⚠️ <b>${pendMand} mandatory document(s)</b> still pending. Please submit at your earliest convenience.</div>`
     :"";
