@@ -729,7 +729,8 @@ function renderList(){
   });
   document.getElementById("list-lbl").textContent=`👥 Clients (${f.length})`;
   document.getElementById("client-tbody").innerHTML=f.map((c,i)=>{
-    const p=getProg(c.documents);
+    const hasEm=c.hasEmirati===true||c.hasEmirati==="true"||c.hasEmirati==="TRUE"||c.hasEmirati==="1";
+const p=getProg(c.documents,hasEm);
     const expiry=c.expiryDate||"";
     const expiryDisplay=expiry?formatExpiry(expiry):"<span style='color:#ccc'>—</span>";
     const followUpFlag=isFollowUpDue(c)?`<span style="font-size:10px;background:#fde8e6;color:#c0392b;border-radius:2px;padding:2px 5px;margin-left:5px;font-weight:700">FOLLOW UP</span>`:"";
