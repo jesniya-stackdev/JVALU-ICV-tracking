@@ -29,7 +29,6 @@ input,select,textarea,button{font-family:inherit}
 .renew-modal-body{font-size:13.5px;line-height:1.7;color:#444;text-align:left}
 #portal-topbar{position:fixed;top:0;right:0;left:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(14,46,42,0.97);border-bottom:2px solid #c9a96e}
 .logo-wrap{display:flex;align-items:center;gap:10px}
-.logo-sq{width:32px;height:32px;background:#c9a96e;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0e2e2a;border-radius:3px;flex-shrink:0}
 .logo-name{color:#fff;font-weight:800;font-size:15px;letter-spacing:2px}
 .logo-tagline{color:#e2c99a;font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-top:1px}
 .topbar-contact{font-size:12px;color:rgba(255,255,255,0.5)}
@@ -78,7 +77,6 @@ input,select,textarea,button{font-family:inherit}
 #admin-screen{display:none;background:#f0ece4;min-height:100vh}
 #admin-login{display:none;position:fixed;inset:0;background:rgba(14,46,42,0.97);align-items:center;justify-content:center;z-index:9999;flex-direction:column}
 .login-box{background:#fff;border-radius:6px;padding:44px 48px;width:380px;border-top:4px solid #c9a96e;text-align:center}
-.login-logo{width:52px;height:52px;background:#c9a96e;border-radius:4px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#0e2e2a;margin:0 auto 16px}
 .login-title{font-size:20px;font-weight:800;color:#0e2e2a;margin-bottom:4px}
 .login-sub{font-size:11px;color:#aaa;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px}
 .f-lbl{font-size:11px;color:#999;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;text-align:left}
@@ -88,7 +86,6 @@ input,select,textarea,button{font-family:inherit}
 .login-btn:hover{background:#b8955c}
 .login-err{color:#c0392b;font-size:12px;margin-top:10px;display:none}
 #admin-hdr{background:#0e2e2a;height:60px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #c9a96e;position:sticky;top:0;z-index:100}
-.hdr-logo{width:34px;height:34px;background:#c9a96e;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0e2e2a;flex-shrink:0}
 .hdr-name{color:#fff;font-weight:800;font-size:16px;letter-spacing:2px}
 .hdr-sub{color:#e2c99a;font-size:9px;letter-spacing:3px;margin-top:1px}
 .btn-hdr{border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.6);padding:6px 14px;border-radius:3px;font-size:11px;cursor:pointer;letter-spacing:1px;text-transform:uppercase}
@@ -299,13 +296,12 @@ code{background:#f0ece4;padding:2px 6px;border-radius:3px;font-family:monospace;
     </div>
   </div>
   <div id="portal-topbar">
-    <div class="logo-wrap">
-      <div class="logo-sq">JV</div>
-      <div>
-        <div class="logo-name">JVALU</div>
-        <div class="logo-tagline">Certifications &amp; Advisory</div>
-      </div>
-    </div>
+   <div class="logo-wrap">
+  <div>
+    <div style="color:#fff;font-weight:800;font-size:28px;letter-spacing:4px;line-height:1">JVALU</div>
+    <div style="color:#c9a96e;font-size:9px;letter-spacing:4px;text-transform:uppercase;margin-top:3px">Certification &amp; Evaluation</div>
+  </div>
+</div>
     <div class="topbar-contact">
       <b>02 6413666</b> &nbsp;·&nbsp; <b>Support@jvalu.ae</b>
     </div>
@@ -356,7 +352,10 @@ code{background:#f0ece4;padding:2px 6px;border-radius:3px;font-family:monospace;
 <div id="admin-screen">
   <div id="admin-login">
     <div class="login-box">
-      <div class="login-logo">JV</div>
+    <div style="margin-bottom:16px">
+  <div style="color:#0e2e2a;font-weight:800;font-size:32px;letter-spacing:4px;line-height:1">JVALU</div>
+  <div style="color:#c9a96e;font-size:9px;letter-spacing:4px;text-transform:uppercase;margin-top:3px">Certification &amp; Evaluation</div>
+</div>
       <div class="login-title">Admin Login</div>
       <div class="login-sub">JVALU · ICV Tracker</div>
       <div class="f-lbl">Password</div>
@@ -370,8 +369,10 @@ code{background:#f0ece4;padding:2px 6px;border-radius:3px;font-family:monospace;
 
   <div id="admin-hdr">
     <div style="display:flex;align-items:center;gap:10px">
-      <div class="hdr-logo">JV</div>
-      <div><div class="hdr-name">JVALU</div><div class="hdr-sub">ADMIN · ICV TRACKER</div></div>
+     <div>
+  <div style="color:#fff;font-weight:800;font-size:22px;letter-spacing:4px;line-height:1">JVALU</div>
+  <div style="color:#c9a96e;font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-top:3px">ADMIN · ICV TRACKER</div>
+</div>
     </div>
     <div style="display:flex;align-items:center;gap:12px">
       <span id="sync-status"></span>
