@@ -1231,13 +1231,28 @@ const catRows=ICV_CATS.map(cat=>{
 // ════════════════════════════════════════
 function downloadSummary(c){
   ICV_DOCS.forEach(d=>{if(!c.documents[d.id])c.documents[d.id]={received:false,date:"",remarks:""};});
-  const p=getProg(c.documents);
-  const recvList=ICV_DOCS.filter(d=>c.documents[d.id]&&c.documents[d.id].received);
-  const pendMand=ICV_DOCS.filter(d=>d.required&&!(c.documents[d.id]&&c.documents[d.id].received));
+  const emiratiIds=[10,11,12,13,14,15];
+const hasEm=c.hasEmirati===true||c.hasEmirati==="true"||c.hasEmirati==="TRUE"||c.hasEmirati==="1";
+const p=getProg(c.documents,hasEm);
+const recvList=ICV_DOCS.filter(d=>
+  c.documents[d.id]&&c.documents[d.id].received&&
+  (hasEm||!emiratiIds.includes(d.id))
+);
+const pendMand=ICV_DOCS.filter(d=>
+  d.required&&!(c.documents[d.id]&&c.documents[d.id].received)&&
+  (hasEm||!emiratiIds.includes(d.id))
+);
   const remList=ICV_DOCS.filter(d=>c.documents[d.id]&&c.documents[d.id].remarks);
   const now=new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"});
 
-  const catSections=ICV_CATS.map(cat=>`
+  const catSections=ICV_CATS.map(cat=>{
+  if(cat.cat.includes("Emirati")&&!hasEm){
+    return `<div style="margin-bottom:18px">
+      <div style="background:#1d4a45;color:#fff;padding:8px 14px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase">${cat.cat}</div>
+      <div style="padding:12px 14px;color:#aaa;font-size:13px;background:#f9f9f9;border:1px solid #eee">— No Emirati Employees</div>
+    </div>`;
+  }
+  return `
     <div style="margin-bottom:18px">
       <div style="background:#1d4a45;color:#fff;padding:8px 14px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase">${cat.cat}</div>
       <table style="width:100%;border-collapse:collapse">
@@ -1259,7 +1274,8 @@ function downloadSummary(c){
           }).join("")}
         </tbody>
       </table>
-    </div>`).join("");
+    </div>`;
+}).join("");
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>ICV Summary – ${esc(c.company)}</title>
@@ -1288,11 +1304,11 @@ function downloadSummary(c){
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px">
       <div style="background:#e6f4ee;border:1px solid #b2d8c4;border-radius:4px;padding:14px;text-align:center">
-        <div style="font-size:28px;font-weight:800;color:#1e7e54">${recvList.length}</div>
+       <div style="font-size:28px;font-weight:800;color:#1e7e54">${recvList.length}</div>
         <div style="font-size:11px;color:#555;letter-spacing:1px;text-transform:uppercase;margin-top:4px">Received</div>
       </div>
       <div style="background:#fef3e2;border:1px solid #ffd966;border-radius:4px;padding:14px;text-align:center">
-        <div style="font-size:28px;font-weight:800;color:#d4830a">${ICV_DOCS.length-recvList.length}</div>
+        <div style="font-size:28px;font-weight:800;color:#d4830a">${p.total-recvList.length}</div>
         <div style="font-size:11px;color:#555;letter-spacing:1px;text-transform:uppercase;margin-top:4px">Pending</div>
       </div>
       <div style="background:#f7f3ec;border:1px solid #e2c99a;border-radius:4px;padding:14px;text-align:center">
