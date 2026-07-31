@@ -318,13 +318,29 @@ code{background:#f0ece4;padding:2px 6px;border-radius:3px;font-family:monospace;
 
       <div class="search-wrap">
         <div class="search-label">Search Your File</div>
-        <div class="search-row">
+        <!-- <div class="search-row">
           <input class="s-inp" id="portal-inp"
             placeholder="Company Trade License No..."
             onkeydown="if(event.key==='Enter')portalSearch()">
           <button class="s-btn" onclick="portalSearch()">Search</button>
         </div>
-        <div class="search-hint">e.g."CN-1023847"</div>
+        <div class="search-hint">e.g."CN-1023847"</div> -->
+        <div class="search-row">
+  <input class="s-inp" id="portal-inp"
+    placeholder="Trade License No. (e.g. CN-1023847)"
+    onkeydown="if(event.key==='Enter')portalSearch()">
+</div>
+<div style="margin-top:10px">
+  <input class="s-inp" id="portal-ref"
+    placeholder="Reference No. (e.g. C77125)"
+    onkeydown="if(event.key==='Enter')portalSearch()"
+    style="width:100%">
+</div>
+<div style="margin-top:10px">
+  <button class="s-btn" onclick="portalSearch()" style="width:100%">Search</button>
+</div>
+<div class="search-hint">Enter your Trade License and Reference number to access your file.</div>
+<div id="lockout-msg" style="display:none;margin-top:10px;color:#c0392b;font-size:13px;font-weight:600;background:#fde8e6;padding:10px 14px;border-radius:4px"></div>
         <div class="s-spinner" id="portal-spinner">🔍 Searching your records...</div>
         <div class="s-err" id="portal-err">
           No records found. Please check your details or contact JVALU at <b>02 6413666</b>.
@@ -1028,42 +1044,153 @@ function isCertExpired(dateStr){
 function showRenewReminder(){document.getElementById("renew-modal").classList.add("open");}
 function closeRenewReminder(){document.getElementById("renew-modal").classList.remove("open");}
 async function portalSearch(){
-  const raw=document.getElementById("portal-inp").value.trim();
-  if(!raw){
-    document.getElementById("portal-err").style.display="block";
-    document.getElementById("portal-err").textContent="Please enter a company name or trade license number.";
+//   const raw=document.getElementById("portal-inp").value.trim();
+//   if(!raw){
+//     document.getElementById("portal-err").style.display="block";
+//     document.getElementById("portal-err").textContent="Please enter a company name or trade license number.";
+//     return;
+//   }
+//   const q=raw.toLowerCase();
+//   const qStripped=q.replace(/[\s\-_\.\/]/g,"");
+
+//   document.getElementById("portal-err").style.display="none";
+//   document.getElementById("result-area").innerHTML="";
+//   document.getElementById("portal-spinner").style.display="block";
+
+//   let allClients=[];
+//   let dataSource="none";
+
+//   // 1. Try Google Sheets first (live data — works for all users)
+//   if(true){
+//     try{
+//       const res=await fetch(`${SHEET_URL}?action=getAll&_=${Date.now()}`);
+//       const data=await res.json();
+//       if(data.success && data.clients && data.clients.length>0){
+//         allClients=data.clients;
+//         dataSource="sheets";
+//       }
+//     }catch(e){ /* fall through */ }
+//   }
+
+//   // 2. Fallback to localStorage (only works on same browser as admin)
+//   if(allClients.length===0){
+//     try{
+//       const s=localStorage.getItem("jvalu_clients");
+//       if(s){
+//         allClients=JSON.parse(s);
+//         dataSource="local";
+//       }
+//     }catch(e){}
+//   }
+
+//   document.getElementById("portal-spinner").style.display="none";
+
+//   if(allClients.length===0){
+//     document.getElementById("portal-err").style.display="block";
+//     document.getElementById("portal-err").innerHTML=
+//       `No records found in our system. Please contact JVALU at <b>02 6413666</b> or <b>Support@jvalu.ae</b> to verify your details.`;
+//     return;
+//   }
+
+//   // Smart matching: company name OR trade license (flexible matching)
+//   const found=allClients.find(c=>{
+//     const companyLow=(c.company||"").toLowerCase();
+//     const tlLow=(c.tradeLicense||"").toLowerCase();
+//     const tlStripped=tlLow.replace(/[\s\-_\.\/]/g,"");
+//     const companyMatch=companyLow.includes(q)||q.includes(companyLow.substring(0,Math.min(6,companyLow.length)));
+//     const tlMatch=tlStripped.includes(qStripped)||qStripped.includes(tlStripped);
+//     return companyMatch||tlMatch;
+//   });
+
+//   if(found){
+//     ICV_DOCS.forEach(d=>{if(!found.documents[d.id])found.documents[d.id]={received:false,date:"",remarks:""};});
+//     document.getElementById("portal-body").style.justifyContent="flex-start";
+//     document.getElementById("portal-body").style.paddingTop="72px";
+//     document.getElementById("result-area").innerHTML=buildPortalResult(found);
+//     document.getElementById("result-area").scrollIntoView({behavior:"smooth",block:"start"});
+//     if(isCertExpired(found.expiryDate)) showRenewReminder();
+//   } else {
+//     document.getElementById("portal-err").style.display="block";
+//     document.getElementById("portal-err").innerHTML=
+//       `No file found matching "<b>${esc(raw)}</b>". Please check your company name or trade license number. Contact JVALU at <b>02 6413666</b> or <b>Support@jvalu.ae</b> for help.`;
+//   }
+// }
+// ── Brute-force protection ──────────────────────────────────────────────
+const MAX_ATTEMPTS = 3;
+const LOCK_DURATION = 10 * 60 * 1000; // 10 minutes in ms
+
+function isLockedOut(){
+  const lock = JSON.parse(localStorage.getItem("jvalu_lockout")||"{}");
+  if(!lock.until) return false;
+  if(Date.now() < lock.until) return true;
+  localStorage.removeItem("jvalu_lockout");
+  return false;
+}
+function getLockoutMsg(){
+  const lock = JSON.parse(localStorage.getItem("jvalu_lockout")||"{}");
+  const mins = Math.ceil((lock.until - Date.now()) / 60000);
+  return `Too many failed attempts. Please try again in ${mins} minute${mins===1?"":"s"}.`;
+}
+function recordFailedAttempt(){
+  const key = "jvalu_attempts";
+  let attempts = parseInt(localStorage.getItem(key)||"0") + 1;
+  if(attempts >= MAX_ATTEMPTS){
+    localStorage.setItem("jvalu_lockout", JSON.stringify({until: Date.now() + LOCK_DURATION}));
+    localStorage.removeItem(key);
+  } else {
+    localStorage.setItem(key, String(attempts));
+  }
+  return attempts;
+}
+function clearFailedAttempts(){
+  localStorage.removeItem("jvalu_attempts");
+  localStorage.removeItem("jvalu_lockout");
+}
+
+async function portalSearch(){
+  const lockMsg = document.getElementById("lockout-msg");
+
+  // Check lockout first
+  if(isLockedOut()){
+    lockMsg.style.display="block";
+    lockMsg.textContent = getLockoutMsg();
     return;
   }
-  const q=raw.toLowerCase();
-  const qStripped=q.replace(/[\s\-_\.\/]/g,"");
+
+  const tlRaw = (document.getElementById("portal-inp").value||"").trim();
+  const refRaw = (document.getElementById("portal-ref").value||"").trim();
+
+  if(!tlRaw || !refRaw){
+    document.getElementById("portal-err").style.display="block";
+    document.getElementById("portal-err").textContent="Please enter both your Trade License number and Reference number.";
+    return;
+  }
+
+  // Exact match only — strip spaces/dashes for comparison
+  const tlClean = tlRaw.replace(/[\s\-_\.\/]/g,"").toLowerCase();
+  const refClean = refRaw.replace(/[\s\-_\.\/]/g,"").toLowerCase();
 
   document.getElementById("portal-err").style.display="none";
   document.getElementById("result-area").innerHTML="";
   document.getElementById("portal-spinner").style.display="block";
+  lockMsg.style.display="none";
 
   let allClients=[];
-  let dataSource="none";
 
-  // 1. Try Google Sheets first (live data — works for all users)
-  if(true){
-    try{
-      const res=await fetch(`${SHEET_URL}?action=getAll&_=${Date.now()}`);
-      const data=await res.json();
-      if(data.success && data.clients && data.clients.length>0){
-        allClients=data.clients;
-        dataSource="sheets";
-      }
-    }catch(e){ /* fall through */ }
-  }
+  // Try Google Sheets first
+  try{
+    const res = await fetch(`${SHEET_URL}?action=getAll&_=${Date.now()}`);
+    const data = await res.json();
+    if(data.success && data.clients && data.clients.length>0){
+      allClients = data.clients;
+    }
+  }catch(e){}
 
-  // 2. Fallback to localStorage (only works on same browser as admin)
+  // Fallback to localStorage
   if(allClients.length===0){
     try{
-      const s=localStorage.getItem("jvalu_clients");
-      if(s){
-        allClients=JSON.parse(s);
-        dataSource="local";
-      }
+      const s = localStorage.getItem("jvalu_clients");
+      if(s) allClients = JSON.parse(s);
     }catch(e){}
   }
 
@@ -1071,35 +1198,39 @@ async function portalSearch(){
 
   if(allClients.length===0){
     document.getElementById("portal-err").style.display="block";
-    document.getElementById("portal-err").innerHTML=
-      `No records found in our system. Please contact JVALU at <b>02 6413666</b> or <b>Support@jvalu.ae</b> to verify your details.`;
+    document.getElementById("portal-err").innerHTML=`No records found. Please contact JVALU at <b>02 6413666</b>.`;
     return;
   }
 
-  // Smart matching: company name OR trade license (flexible matching)
-  const found=allClients.find(c=>{
-    const companyLow=(c.company||"").toLowerCase();
-    const tlLow=(c.tradeLicense||"").toLowerCase();
-    const tlStripped=tlLow.replace(/[\s\-_\.\/]/g,"");
-    const companyMatch=companyLow.includes(q)||q.includes(companyLow.substring(0,Math.min(6,companyLow.length)));
-    const tlMatch=tlStripped.includes(qStripped)||qStripped.includes(tlStripped);
-    return companyMatch||tlMatch;
+  // EXACT match on TL + Reference number
+  const found = allClients.find(c=>{
+    const tlMatch = (c.tradeLicense||"").replace(/[\s\-_\.\/]/g,"").toLowerCase() === tlClean;
+    const refMatch = (c.id||"").replace(/[\s\-_\.\/]/g,"").toLowerCase() === refClean;
+    return tlMatch && refMatch;
   });
 
   if(found){
+    clearFailedAttempts();
     ICV_DOCS.forEach(d=>{if(!found.documents[d.id])found.documents[d.id]={received:false,date:"",remarks:""};});
     document.getElementById("portal-body").style.justifyContent="flex-start";
     document.getElementById("portal-body").style.paddingTop="72px";
     document.getElementById("result-area").innerHTML=buildPortalResult(found);
     document.getElementById("result-area").scrollIntoView({behavior:"smooth",block:"start"});
-    if(isCertExpired(found.expiryDate)) showRenewReminder();
   } else {
+    const attempts = recordFailedAttempt();
     document.getElementById("portal-err").style.display="block";
-    document.getElementById("portal-err").innerHTML=
-      `No file found matching "<b>${esc(raw)}</b>". Please check your company name or trade license number. Contact JVALU at <b>02 6413666</b> or <b>Support@jvalu.ae</b> for help.`;
+    if(isLockedOut()){
+      document.getElementById("portal-err").style.display="none";
+      lockMsg.style.display="block";
+      lockMsg.textContent = getLockoutMsg();
+    } else {
+      const remaining = MAX_ATTEMPTS - attempts;
+      document.getElementById("portal-err").innerHTML=
+        `No matching record found. Please check your Trade License and Reference number.<br>
+        <span style="font-size:12px;color:#c0392b">⚠ ${remaining} attempt${remaining===1?"":"s"} remaining before temporary lockout.</span>`;
+    }
   }
 }
-
 function buildPortalResult(c){
 const emiratiIds=[10,11,12,13,14,15];
   const hasEm=c.hasEmirati===true||c.hasEmirati==="true"||c.hasEmirati==="TRUE"||c.hasEmirati==="1";
