@@ -426,8 +426,10 @@ code{background:#f0ece4;padding:2px 6px;border-radius:3px;font-family:monospace;
         <div style="text-align:center;padding:20px;color:#888;font-size:13px;display:none" id="list-spinner">⟳ Loading...</div>
         <table class="tbl" id="list-tbl">
           <thead><tr>
-            <th>Company</th><th>Trade License</th><th>Contact</th><th>Responsible</th>
-            <th>Stage</th><th>Expiry</th><th>Docs</th><th>Progress</th><th>Added</th><th>Action</th>
+ renderList           <!-- <th>Company</th><th>Trade License</th><th>Contact</th><th>Responsible</th>
+            <th>Stage</th><th>Expiry</th><th>Docs</th><th>Progress</th><th>Added</th><th>Action</th> -->
+            <th>Ref</th><th>Company</th><th>Trade License</th><th>Contact</th><th>Responsible</th>
+<th>Stage</th><th>Expiry</th><th>Docs</th><th>Progress</th><th>Added</th><th>Action</th>
           </tr></thead>
           <tbody id="client-tbody"></tbody>
         </table>
@@ -751,7 +753,13 @@ const p=getProg(c.documents,hasEm);
     const expiry=c.expiryDate||"";
     const expiryDisplay=expiry?formatExpiry(expiry):"<span style='color:#ccc'>—</span>";
     const followUpFlag=isFollowUpDue(c)?`<span style="font-size:10px;background:#fde8e6;color:#c0392b;border-radius:2px;padding:2px 5px;margin-left:5px;font-weight:700">FOLLOW UP</span>`:"";
+    // return `<tr style="background:${i%2===0?"#fafafa":"#fff"}">
+    //   <td style="font-weight:700;color:#0e2e2a">${esc(c.company)}${followUpFlag}</td>
     return `<tr style="background:${i%2===0?"#fafafa":"#fff"}">
+      <td style="font-family:monospace;font-size:12px;color:#c9a96e;font-weight:700">
+        ${esc(c.id)}
+        <button onclick="navigator.clipboard.writeText('${c.id}');showToast('✓ Ref copied!')" style="margin-left:5px;background:none;border:1px solid #c9a96e;border-radius:3px;padding:1px 5px;font-size:10px;color:#c9a96e;cursor:pointer">copy</button>
+      </td>
       <td style="font-weight:700;color:#0e2e2a">${esc(c.company)}${followUpFlag}</td>
       <td style="font-family:monospace;color:#555;font-size:12px">${esc(c.tradeLicense)}</td>
       <td style="color:#666">${esc(c.contact||"")}</td>
@@ -769,7 +777,7 @@ const p=getProg(c.documents,hasEm);
         <button class="btn btn-red btn-sm" onclick="delClient('${c.id}')">✕</button>
       </div></td>
     </tr>`;
-  }).join("")||`<tr><td colspan="10" style="text-align:center;color:#ccc;padding:24px">No clients found.</td></tr>`;
+  }).join("")||`<tr><td colspan="11" style="text-align:center;color:#ccc;padding:24px">No clients found.</td></tr>`;
 }
 
 async function delClient(id){
