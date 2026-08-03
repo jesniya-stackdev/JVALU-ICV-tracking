@@ -1243,20 +1243,20 @@ const catRows=ICV_CATS.map(cat=>{
 
     ${remSection}
 
-    <div class="two-col">
-      <div class="list-card" style="border-top:3px solid #1e7e54">
-        <div class="list-hdr" style="color:#1e7e54">✓ Received (${recvList.length})</div>
-        ${recvList.length>0
-          ?recvList.map(d=>`<div class="doc-row-p"><span style="font-size:13px">${esc(d.name)}</span><span style="font-size:11px;color:#aaa">${esc(fmtDate(c.documents[d.id].date||""))}</span></div>`).join("")
-          :`<div style="color:#ccc;text-align:center;padding:12px 0;font-size:13px">None yet</div>`}
-      </div>
-      <div class="list-card" style="border-top:3px solid #d4830a">
-        <div class="list-hdr" style="color:#d4830a">⏳ Pending (${pendList.length})</div>
-        ${pendList.length>0
-          ?pendList.map(d=>`<div class="doc-row-p"><span style="font-size:13px;color:#666">${esc(d.name)}</span><span style="font-size:10px;color:#ccc">${d.required?"":"IF APPL."}</span></div>`).join("")
-          :`<div style="color:#1e7e54;text-align:center;padding:12px 0;font-size:13px;font-weight:700">✅ All received!</div>`}
-      </div>
-    </div>
+    // <div class="two-col">
+    //   <div class="list-card" style="border-top:3px solid #1e7e54">
+    //     <div class="list-hdr" style="color:#1e7e54">✓ Received (${recvList.length})</div>
+    //     ${recvList.length>0
+    //       ?recvList.map(d=>`<div class="doc-row-p"><span style="font-size:13px">${esc(d.name)}</span><span style="font-size:11px;color:#aaa">${esc(fmtDate(c.documents[d.id].date||""))}</span></div>`).join("")
+    //       :`<div style="color:#ccc;text-align:center;padding:12px 0;font-size:13px">None yet</div>`}
+    //   </div>
+    //   <div class="list-card" style="border-top:3px solid #d4830a">
+    //     <div class="list-hdr" style="color:#d4830a">⏳ Pending (${pendList.length})</div>
+    //     ${pendList.length>0
+    //       ?pendList.map(d=>`<div class="doc-row-p"><span style="font-size:13px;color:#666">${esc(d.name)}</span><span style="font-size:10px;color:#ccc">${d.required?"":"IF APPL."}</span></div>`).join("")
+    //       :`<div style="color:#1e7e54;text-align:center;padding:12px 0;font-size:13px;font-weight:700">✅ All received!</div>`}
+    //   </div>
+    // </div>
 
     <div class="footer-dark">
       <div style="font-size:10px;letter-spacing:3px;color:#c9a96e;text-transform:uppercase;margin-bottom:8px">Need Help? Contact JVALU</div>
@@ -1265,9 +1265,9 @@ const catRows=ICV_CATS.map(cat=>{
         Please quote reference: <b style="color:#e2c99a">${esc(c.id)}</b>
       </div>
     </div>
-    <div class="page-footer-bar">
-      JVALU Certifications and Advisory L.L.C – S.P.C · Al Wahda Commercial Tower, First Floor 101, Abu Dhabi, UAE
-    </div>`;
+    // <div class="page-footer-bar">
+    //   JVALU Certifications and Advisory L.L.C – S.P.C · Al Wahda Commercial Tower, First Floor 101, Abu Dhabi, UAE
+    // </div>`;
 }
 
 // ════════════════════════════════════════
